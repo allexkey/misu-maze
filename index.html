@@ -27,14 +27,13 @@ header{width:100%;max-width:640px;display:flex;align-items:center;justify-conten
 .btns button{width:38px;height:38px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:#fff;font-size:16px;touch-action:manipulation}
 #stage{flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center;position:relative}
 canvas{display:block;border-radius:14px;box-shadow:0 0 40px rgba(91,124,255,.25)}
-#pad{display:none;grid-template-columns:repeat(3,64px);grid-template-rows:repeat(3,64px);gap:6px;padding:8px 0 14px}
-#pad button{border-radius:18px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.1);color:#fff;font-size:24px;touch-action:none}
-#pad button:active{background:rgba(255,255,255,.28)}
-#pad .u{grid-area:1/2}#pad .l{grid-area:2/1}#pad .r{grid-area:2/3}#pad .d{grid-area:3/2}
-@media (pointer:coarse){#pad{display:grid}}
-@media (pointer:coarse) and (orientation:landscape){
-  #pad{position:absolute;right:calc(14px + env(safe-area-inset-right));bottom:10px;opacity:.55;padding:0;grid-template-columns:repeat(3,56px);grid-template-rows:repeat(3,56px)}
-}
+#pad{display:none;width:100%;height:160px;flex:0 0 auto;align-items:center;justify-content:center}
+@media (pointer:coarse){#pad{display:flex}}
+#padBase,#ring{width:128px;height:128px;border-radius:50%;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.25);position:relative;touch-action:none}
+#ring{position:fixed;z-index:4;pointer-events:none;display:none;margin:-64px 0 0 -64px;background:rgba(255,255,255,.12)}
+#ring.on{display:block}
+.knob{position:absolute;left:50%;top:50%;width:54px;height:54px;margin:-27px 0 0 -27px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#ffb347);box-shadow:0 4px 14px rgba(0,0,0,.45);pointer-events:none}
+@media (pointer:coarse) and (orientation:landscape){#pad{position:absolute;right:calc(14px + env(safe-area-inset-right));bottom:8px;width:auto;height:auto;opacity:.6}}
 #overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(8,4,24,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:5;padding:20px}
 #overlay.hidden,.hidden{display:none!important}
 .card{max-width:340px;width:100%;text-align:center;padding:26px 22px;border-radius:26px;background:linear-gradient(160deg,rgba(91,124,255,.28),rgba(255,122,168,.18));border:1px solid rgba(255,255,255,.18);box-shadow:0 20px 60px rgba(0,0,0,.5)}
@@ -64,13 +63,9 @@ canvas{display:block;border-radius:14px;box-shadow:0 0 40px rgba(91,124,255,.25)
     <div class="btns"><button id="muteBtn" aria-label="Sound">🔊</button><button id="pauseBtn" aria-label="Pause">⏸</button></div>
   </header>
   <div id="stage"><canvas id="cv" aria-label="Misu Maze game"></canvas></div>
-  <div id="pad" aria-label="controls">
-    <button class="u" data-dir="0" aria-label="Up">▲</button>
-    <button class="l" data-dir="1" aria-label="Left">◀</button>
-    <button class="r" data-dir="3" aria-label="Right">▶</button>
-    <button class="d" data-dir="2" aria-label="Down">▼</button>
-  </div>
+  <div id="pad" aria-label="joystick"><div id="padBase"><div id="padKnob" class="knob"></div></div></div>
 </div>
+<div id="ring"><div id="ringKnob" class="knob"></div></div>
 <div id="overlay">
   <div class="card">
     <button id="langBtn" type="button">RO</button>

@@ -77,22 +77,22 @@ const FRUIT_PTS = [100, 300, 500, 700, 1000, 2000, 3000, 5000];
 const I18N = {
   en: {
     tag: 'Munch all the pearls and dodge the Grumps!',
-    how: 'Swipe anywhere or use the arrows. Big pearls make the Grumps flee!',
+    how: 'Hold your finger down and slide up, down, left or right like a joystick. Big pearls make the Grumps flee!',
     heroes: 'Heroes of Mihai Viteazul High School · Class XII-A',
     play: 'Play', again: 'Play again', resume: 'Resume', paused: 'Paused',
     over: 'Game over', score: 'Score', best: 'Best', level: 'Level',
     install: 'Install app', ios: 'To install: tap Share, then “Add to Home Screen”.',
-    ready: 'READY!', go: 'Swipe to start', newbest: 'New best!', clear: 'Level clear!',
+    ready: 'READY!', go: 'Slide to start', newbest: 'New best!', clear: 'Level clear!',
     ventiD: 'Full size', comboD: 'Compact · bigger on phone', pick: 'Choose version'
   },
   ro: {
     tag: 'Mănâncă toate perlele și fugi de Grumpi!',
-    how: 'Glisează pe ecran sau folosește săgețile. Perlele mari îi sperie pe Grumpi!',
+    how: 'Ține degetul apăsat și mută-l sus, jos, stânga sau dreapta, ca la un joystick. Perlele mari îi sperie pe Grumpi!',
     heroes: 'Eroii Liceului Mihai Viteazul · clasa a XII-a A',
     play: 'Joacă', again: 'Joacă din nou', resume: 'Continuă', paused: 'Pauză',
     over: 'Joc terminat', score: 'Scor', best: 'Record', level: 'Nivel',
     install: 'Instalează aplicația', ios: 'Instalare: apasă Partajează, apoi „Adaugă pe ecranul principal”.',
-    ready: 'GATA?', go: 'Glisează ca să începi', newbest: 'Record nou!', clear: 'Nivel complet!',
+    ready: 'GATA?', go: 'Mută degetul ca să începi', newbest: 'Record nou!', clear: 'Nivel complet!',
     ventiD: 'Mărime completă', comboD: 'Compact · mai mare pe telefon', pick: 'Alege versiunea'
   }
 };
@@ -724,21 +724,52 @@ window.addEventListener('keydown', e => {
   else if (e.code === 'KeyM') toggleMute();
 });
 
-let sx = 0, sy = 0, swiping = false;
-const app = $('app');
-app.addEventListener('pointerdown', e => { Snd.resume(); sx = e.clientX; sy = e.clientY; swiping = true; });
+/* joystick: hold the finger down and slide in any direction without lifting */
+const app = $('app'), padBase = $('padBase'), padKnob = $('padKnob'), ring = $('ring'), ringKnob = $('ringKnob');
+const DEAD = 12, KNOB_R = 40, LEASH = 64;
+let joy = null;
+function joyDir(dx, dy) {
+  const ax = Math.abs(dx), ay = Math.abs(dy);
+  if (Math.max(ax, ay) < DEAD) return -1;
+  const horiz = want === LEFT || want === RIGHT;
+  // hysteresis: stay on the current axis unless the other one clearly wins
+  const useH = horiz ? ax * 1.25 >= ay : ax > ay * 1.25;
+  return useH ? (dx > 0 ? RIGHT : LEFT) : (dy > 0 ? DOWN : UP);
+}
+function placeKnob(knob, dx, dy) {
+  const d = Math.hypot(dx, dy), k = d > KNOB_R ? KNOB_R / d : 1;
+  knob.style.transform = 'translate(' + (dx * k) + 'px,' + (dy * k) + 'px)';
+}
+app.addEventListener('pointerdown', e => {
+  if (joy || e.target.closest('button, #overlay')) return;
+  Snd.resume();
+  const r = padBase.getBoundingClientRect();
+  const inPad = r.width > 0 && e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+  joy = { id: e.pointerId, fixed: inPad, ox: inPad ? r.left + r.width / 2 : e.clientX, oy: inPad ? r.top + r.height / 2 : e.clientY };
+  joy.knob = inPad ? padKnob : ringKnob;
+  if (!inPad) { ring.style.left = joy.ox + 'px'; ring.style.top = joy.oy + 'px'; ring.classList.add('on'); }
+  try { app.setPointerCapture(e.pointerId); } catch (err) {}
+});
 app.addEventListener('pointermove', e => {
-  if (!swiping) return;
-  const dx = e.clientX - sx, dy = e.clientY - sy;
-  if (Math.max(Math.abs(dx), Math.abs(dy)) > 14) {
-    setWant(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? RIGHT : LEFT) : (dy > 0 ? DOWN : UP));
-    sx = e.clientX; sy = e.clientY;
+  if (!joy || e.pointerId !== joy.id) return;
+  let dx = e.clientX - joy.ox, dy = e.clientY - joy.oy;
+  const d = Math.hypot(dx, dy);
+  if (!joy.fixed && d > LEASH) {           // floating origin follows the finger so reversing stays quick
+    const k = (d - LEASH) / d;
+    joy.ox += dx * k; joy.oy += dy * k; dx = e.clientX - joy.ox; dy = e.clientY - joy.oy;
+    ring.style.left = joy.ox + 'px'; ring.style.top = joy.oy + 'px';
   }
+  placeKnob(joy.knob, dx, dy);
+  const dir = joyDir(dx, dy);
+  if (dir >= 0) setWant(dir);
 });
-['pointerup', 'pointercancel', 'pointerleave'].forEach(n => app.addEventListener(n, () => { swiping = false; }));
-document.querySelectorAll('#pad button').forEach(b => {
-  b.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); Snd.resume(); setWant(parseInt(b.dataset.dir, 10)); });
-});
+function joyEnd(e) {
+  if (!joy || e.pointerId !== joy.id) return;
+  joy.knob.style.transform = 'translate(0,0)';
+  ring.classList.remove('on');
+  joy = null;
+}
+['pointerup', 'pointercancel'].forEach(n => app.addEventListener(n, joyEnd));
 ['gesturestart', 'contextmenu'].forEach(n => document.addEventListener(n, e => e.preventDefault()));
 
 function toggleMute() {
@@ -820,5 +851,5 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
 }
 
-window.__mm = { S, startGame, update, setWant, newLevel, walkable, bfsDir, pos, setVersion, get P() { return P; }, get G() { return G; }, get grid() { return grid; }, get base() { return base; }, get COLS() { return COLS; }, get ROWS() { return ROWS; }, get M() { return M; }, DX, DY };
+window.__mm = { S, startGame, update, setWant, newLevel, walkable, bfsDir, pos, setVersion, get want() { return want; }, get P() { return P; }, get G() { return G; }, get grid() { return grid; }, get base() { return base; }, get COLS() { return COLS; }, get ROWS() { return ROWS; }, get M() { return M; }, DX, DY };
 })();
