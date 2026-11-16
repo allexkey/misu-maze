@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>Mochi Maze</title>
-<meta name="description" content="Mochi Maze — a free, offline-ready maze-chase game. Munch the pearls, dodge the Grumps. Installable PWA.">
+<title>Misu Maze</title>
+<meta name="description" content="Misu Maze — a free, offline-ready maze-chase game. Munch the pearls, dodge the Grumps. Installable PWA.">
 <meta name="theme-color" content="#0b0620">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Mochi Maze">
+<meta name="apple-mobile-web-app-title" content="Misu Maze">
 <style>
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:#0b0620;color:#fff;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden;overscroll-behavior:none;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
@@ -45,6 +45,12 @@ canvas{display:block;border-radius:14px;box-shadow:0 0 40px rgba(91,124,255,.25)
 .card button.alt{margin-top:10px;width:100%;padding:12px;border-radius:14px;border:1px solid rgba(255,255,255,.3);background:transparent;color:#fff;font-size:15px;touch-action:manipulation}
 #langBtn{position:absolute;top:10px;right:10px;width:auto;padding:4px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.3);background:transparent;color:#fff;font-size:12px}
 .card{position:relative}
+.card #verPick{display:flex;gap:8px;margin:14px 0 4px}
+#verPick button{flex:1;padding:10px 6px;border-radius:14px;border:2px solid rgba(255,255,255,.22);background:rgba(255,255,255,.06);color:#fff;display:flex;flex-direction:column;gap:2px;font-size:17px;touch-action:manipulation}
+#verPick button span{font-size:11px;opacity:.7;line-height:1.2}
+#verPick button.on{border-color:#ffb347;background:rgba(255,179,71,.18);box-shadow:0 0 18px rgba(255,179,71,.25)}
+.heroes{font-weight:800;font-size:13px!important;letter-spacing:.04em;text-transform:uppercase;color:#7be7ff;opacity:1!important;margin:2px 0 8px!important}
+.roast{font-style:italic;color:#ffd166;opacity:1!important;font-size:14px!important;padding:8px 10px;border-radius:12px;background:rgba(255,209,102,.1);border:1px dashed rgba(255,209,102,.4)}
 .mascot{font-size:54px;line-height:1;margin-bottom:4px}
 </style>
 </head>
@@ -57,7 +63,7 @@ canvas{display:block;border-radius:14px;box-shadow:0 0 40px rgba(91,124,255,.25)
     <div id="lives" aria-label="lives"></div>
     <div class="btns"><button id="muteBtn" aria-label="Sound">🔊</button><button id="pauseBtn" aria-label="Pause">⏸</button></div>
   </header>
-  <div id="stage"><canvas id="cv" aria-label="Mochi Maze game"></canvas></div>
+  <div id="stage"><canvas id="cv" aria-label="Misu Maze game"></canvas></div>
   <div id="pad" aria-label="controls">
     <button class="u" data-dir="0" aria-label="Up">▲</button>
     <button class="l" data-dir="1" aria-label="Left">◀</button>
@@ -69,16 +75,22 @@ canvas{display:block;border-radius:14px;box-shadow:0 0 40px rgba(91,124,255,.25)
   <div class="card">
     <button id="langBtn" type="button">RO</button>
     <div class="mascot">🍡</div>
-    <h1 id="title">Mochi Maze</h1>
+    <h1 id="title">Misu Maze</h1>
+    <p id="heroes" class="heroes" data-i18n="heroes"></p>
     <p id="result" class="res hidden"></p>
     <p id="tag" data-i18n="tag"></p>
+    <div id="verPick" role="group" aria-label="Version">
+      <button type="button" data-ver="venti"><b>Venti</b><span data-i18n="ventiD"></span></button>
+      <button type="button" data-ver="combo"><b>Combo</b><span data-i18n="comboD"></span></button>
+    </div>
+    <p id="roast" class="roast"></p>
     <p id="how" data-i18n="how"></p>
     <button id="playBtn" class="main" type="button" data-i18n="play">Play</button>
     <button id="installBtn" class="alt hidden" type="button" data-i18n="install">Install app</button>
     <p id="iosHint" class="hidden" data-i18n="ios"></p>
   </div>
 </div>
-<noscript><p style="padding:20px">Mochi Maze needs JavaScript.</p></noscript>
+<noscript><p style="padding:20px">Misu Maze needs JavaScript.</p></noscript>
 <script src="game.js"></script>
 </body>
 </html>

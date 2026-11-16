@@ -1,45 +1,75 @@
-/* Mochi Maze — an original maze-chase game. MIT License. */
+/* Misu Maze — an original maze-chase game. MIT License. */
 (() => {
 'use strict';
 
 /* ───────────── constants & maze ───────────── */
-const COLS = 19, ROWS = 21;
-const MAP = [
-  '###################',
-  '#........#........#',
-  '#o##.###.#.###.##o#',
-  '#.................#',
-  '#.##.#.#####.#.##.#',
-  '#....#...#...#....#',
-  '####.### # ###.####',
-  '####.#       #.####',
-  '####.# ##-## #.####',
-  '    .  #   #  .    ',
-  '####.# ##### #.####',
-  '####.#       #.####',
-  '####.### # ###.####',
-  '#........#........#',
-  '#o##.###.#.###.##o#',
-  '#..#...........#..#',
-  '##.#.#.#####.#.#.##',
-  '#....#...#...#....#',
-  '#.######.#.######.#',
-  '#.................#',
-  '###################'
-];
+let COLS = 19, ROWS = 21;
+const MAZES = {
+  venti: {
+    id: 'venti', speed: 1, shy: 6, tl: 4, tr: 14, tunnelRow: 9,
+    map: [
+      '###################',
+      '#........#........#',
+      '#o##.###.#.###.##o#',
+      '#.................#',
+      '#.##.#.#####.#.##.#',
+      '#....#...#...#....#',
+      '####.### # ###.####',
+      '####.#       #.####',
+      '####.# ##-## #.####',
+      '    .  #   #  .    ',
+      '####.# ##### #.####',
+      '####.#       #.####',
+      '####.### # ###.####',
+      '#........#........#',
+      '#o##.###.#.###.##o#',
+      '#..#...........#..#',
+      '##.#.#.#####.#.#.##',
+      '#....#...#...#....#',
+      '#.######.#.######.#',
+      '#.................#',
+      '###################'
+    ],
+    start: [9, 15], gstart: [[9, 7], [9, 9], [8, 9], [10, 9]], door: [9, 8], house: [9, 9], exit: [9, 7],
+    fruit: [9, 11], corners: [[17, 0], [1, 0], [17, 20], [1, 20]], bannerY: [11.5, 13.5], fruitAt: null
+  },
+  combo: {
+    id: 'combo', speed: 0.88, shy: 4, tl: 3, tr: 7, tunnelRow: 7,
+    map: [
+      '###########',
+      '#....#....#',
+      '#o##.#.##o#',
+      '#.........#',
+      '#.##.#.##.#',
+      '#.#     #.#',
+      '#.###-###.#',
+      '   #   #   ',
+      '#.#######.#',
+      '#.#     #.#',
+      '#.##.#.##.#',
+      '#.........#',
+      '#o##.#.##o#',
+      '#....#....#',
+      '###########'
+    ],
+    start: [5, 11], gstart: [[5, 5], [5, 7], [4, 7], [6, 7]], door: [5, 6], house: [5, 7], exit: [5, 5],
+    fruit: [5, 9], corners: [[9, 0], [1, 0], [9, 14], [1, 14]], bannerY: [9.5, 11.5], fruitAt: null
+  }
+};
+let M = MAZES.venti;
 const UP = 0, LEFT = 1, DOWN = 2, RIGHT = 3;
 const DX = [0, -1, 0, 1], DY = [-1, 0, 1, 0];
 const OPP = d => (d + 2) & 3;
 const wrapX = x => ((x % COLS) + COLS) % COLS;
 
 const GH = [
-  { name: 'Rusty', color: '#ff5a4d', corner: [17, 0],  start: [9, 7] },
-  { name: 'Plum',  color: '#b57bff', corner: [1, 0],   start: [9, 9] },
-  { name: 'Teal',  color: '#27d3c3', corner: [17, 20], start: [8, 9] },
-  { name: 'Amber', color: '#ffb33b', corner: [1, 20],  start: [10, 9] }
+  { name: 'Rusty', color: '#ff5a4d' },
+  { name: 'Plum',  color: '#b57bff' },
+  { name: 'Teal',  color: '#27d3c3' },
+  { name: 'Amber', color: '#ffb33b' }
 ];
-const RELEASE = [0, 1.5, 4, 7];
-const FRIGHT_TIME = [7, 6, 5, 4, 3, 2.5, 2, 2];
+const RELEASE = [0, 3, 7, 12];
+const FRIGHT_TIME = [10, 9, 8, 7, 6, 5, 4, 4];
 const FRUITS = ['🍒', '🍓', '🍊', '🍎', '🍇', '🍉', '🍍', '🍑'];
 const FRUIT_PTS = [100, 300, 500, 700, 1000, 2000, 3000, 5000];
 
@@ -48,20 +78,65 @@ const I18N = {
   en: {
     tag: 'Munch all the pearls and dodge the Grumps!',
     how: 'Swipe anywhere or use the arrows. Big pearls make the Grumps flee!',
+    heroes: 'Heroes of Mihai Viteazul High School · Class XII-A',
     play: 'Play', again: 'Play again', resume: 'Resume', paused: 'Paused',
     over: 'Game over', score: 'Score', best: 'Best', level: 'Level',
     install: 'Install app', ios: 'To install: tap Share, then “Add to Home Screen”.',
-    ready: 'READY!', go: 'Swipe to start', newbest: 'New best!', clear: 'Level clear!'
+    ready: 'READY!', go: 'Swipe to start', newbest: 'New best!', clear: 'Level clear!',
+    ventiD: 'Full size', comboD: 'Compact · bigger on phone', pick: 'Choose version'
   },
   ro: {
     tag: 'Mănâncă toate perlele și fugi de Grumpi!',
     how: 'Glisează pe ecran sau folosește săgețile. Perlele mari îi sperie pe Grumpi!',
+    heroes: 'Eroii Liceului Mihai Viteazul · clasa a XII-a A',
     play: 'Joacă', again: 'Joacă din nou', resume: 'Continuă', paused: 'Pauză',
     over: 'Joc terminat', score: 'Scor', best: 'Record', level: 'Nivel',
     install: 'Instalează aplicația', ios: 'Instalare: apasă Partajează, apoi „Adaugă pe ecranul principal”.',
-    ready: 'GATA?', go: 'Glisează ca să începi', newbest: 'Record nou!', clear: 'Nivel complet!'
+    ready: 'GATA?', go: 'Glisează ca să începi', newbest: 'Record nou!', clear: 'Nivel complet!',
+    ventiD: 'Mărime completă', comboD: 'Compact · mai mare pe telefon', pick: 'Alege versiunea'
   }
 };
+const ROAST = {
+  ro: {
+    start: [
+      'Voi, eroii care fug mai repede de Grumpi decât de ora de mate.',
+      'Bacul se apropie, dar măcar aici mâncați ceva fără să vă dea nimeni 4.',
+      'Mihai Viteazul a unit trei țări. Voi nu reușiți să uniți nici grupul de WhatsApp.',
+      'Singura temă pe care o faceți cu entuziasm: să mâncați perle.',
+      'Clasa a XII-a A: 90% talent, 10% prezență. Restul e „n-am avut net”.',
+      'Un erou adevărat nu copiază. Un erou adevărat „se inspiră” din rândul din față.'
+    ],
+    over: [
+      'Mihai Viteazul ar fi rezistat mai mult. Dar el n-avea telefon în mână.',
+      'Prins de un Grumpi? Normal, doar ați alergat toată liceul după ultima gogoașă.',
+      'Clasa a XII-a A, unde chiar și Grumpii iau nota mai mare.',
+      'Scor de bac: promitem că rămânem optimiști.',
+      'Ați pierdut. Dar ați pierdut cu stil. Puțin. Foarte puțin.'
+    ]
+  },
+  en: {
+    start: [
+      'Heroes who run faster from Grumps than from math class.',
+      'Mihai Viteazul united three countries. You can’t even unite the WhatsApp group.',
+      'The only homework you do with enthusiasm: eating pearls.',
+      'Class XII-A: 90% talent, 10% attendance. The rest is “my internet died”.',
+      'A true hero never copies. A true hero “gets inspired” by the row in front.'
+    ],
+    over: [
+      'Mihai Viteazul would have lasted longer. But he had no phone in hand.',
+      'Caught by a Grump? Of course. You sprinted all school year for the last donut.',
+      'Class XII-A, where even the Grumps get better grades.',
+      'Bac-level score. We stay optimistic.',
+      'You lost. But with style. A little. Very little.'
+    ]
+  }
+};
+let lastRoast = '';
+function roastLine(kind) {
+  const arr = (ROAST[lang] || ROAST.en)[kind];
+  let r; do { r = arr[(Math.random() * arr.length) | 0]; } while (r === lastRoast && arr.length > 1);
+  lastRoast = r; return r;
+}
 let lang = 'en';
 try {
   lang = localStorage.getItem('mochimaze.lang') || ((navigator.language || 'en').toLowerCase().startsWith('ro') ? 'ro' : 'en');
@@ -76,10 +151,13 @@ let dpr = 1, mazeBlue = null, mazeWhite = null;
 
 /* ───────────── maze parsing ───────────── */
 let base = [], grid = [];
-(function parseMap() {
-  const g = MAP.map(r => r.split(''));
+function loadMaze(id) {
+  M = MAZES[id] || MAZES.venti;
+  COLS = M.map[0].length; ROWS = M.map.length;
+  const g = M.map.map(r => r.split(''));
+  for (const r of g) if (r.length !== COLS) throw new Error('bad maze');
   // anything not reachable from the start becomes solid wall
-  const seen = new Set(), st = [[9, 15]];
+  const seen = new Set(), st = [M.start.slice()];
   while (st.length) {
     const [x, y] = st.pop(), k = x + y * COLS;
     if (seen.has(k)) continue; seen.add(k);
@@ -91,8 +169,11 @@ let base = [], grid = [];
   }
   for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (!seen.has(x + y * COLS)) g[y][x] = '#';
   base = g;
-  grid = g.map(r => r.slice());
-})();
+  let total = 0;
+  for (const r of g) for (const c of r) if (c === '.' || c === 'o') total++;
+  M.total = total - 1;
+  if (!M.fruitAt) M.fruitAt = [Math.round(M.total * 0.33), Math.round(M.total * 0.72)];
+}
 
 function tileAt(x, y) { if (y < 0 || y >= ROWS) return '#'; return grid[y][wrapX(x)]; }
 function walkable(x, y, door) {
@@ -110,7 +191,14 @@ const S = {
   gmode: 'scatter', modeIdx: 0, modeT: 7, sched: [], started: false, extra: false, newBest: false
 };
 let P = null, G = [], popups = [], want = -1, wantT = 0;
-try { S.best = parseInt(localStorage.getItem('mochimaze.best') || '0', 10) || 0; } catch (e) {}
+function loadBest() {
+  try {
+    let v = localStorage.getItem('mochimaze.best.' + M.id);
+    if (v === null && M.id === 'venti') v = localStorage.getItem('mochimaze.best');
+    S.best = parseInt(v || '0', 10) || 0;
+  } catch (e) { S.best = 0; }
+}
+function saveBest() { try { localStorage.setItem('mochimaze.best.' + M.id, String(S.best)); } catch (e) {} }
 
 /* ───────────── sound ───────────── */
 const Snd = {
@@ -141,17 +229,17 @@ try { Snd.muted = localStorage.getItem('mochimaze.muted') === '1'; } catch (e) {
 /* ───────────── level setup ───────────── */
 function modeSchedule(level) {
   const sc = level >= 5 ? 3 : level >= 3 ? 5 : 7;
-  return [['scatter', sc], ['chase', 20], ['scatter', sc], ['chase', 20], ['scatter', 5], ['chase', 20], ['scatter', 3], ['chase', 1e9]];
+  return [['scatter', sc + 3], ['chase', 10], ['scatter', sc + 3], ['chase', 12], ['scatter', 6], ['chase', 14], ['scatter', 5], ['chase', 1e9]];
 }
 const frightTime = () => FRIGHT_TIME[Math.min(S.level - 1, FRIGHT_TIME.length - 1)];
-const playerSpeed = () => Math.min(6.4, 5.7 + 0.06 * (S.level - 1));
-const ghostBase = () => Math.min(6.4, 4.9 + 0.25 * (S.level - 1));
+const playerSpeed = () => Math.min(6.4, 5.7 + 0.06 * (S.level - 1)) * M.speed;
+const ghostBase = () => Math.min(5.2, 3.8 + 0.12 * (S.level - 1)) * M.speed;
 
 function resetPositions() {
-  P = { tx: 9, ty: 15, dir: -1, p: 0, face: LEFT };
+  P = { tx: M.start[0], ty: M.start[1], dir: -1, p: 0, face: LEFT };
   const k = Math.max(0.4, 1 - 0.07 * (S.level - 1));
   G = GH.map((d, i) => ({
-    id: i, tx: d.start[0], ty: d.start[1], dir: i === 0 ? LEFT : -1, p: 0,
+    id: i, tx: M.gstart[i][0], ty: M.gstart[i][1], dir: i === 0 ? LEFT : -1, p: 0,
     state: i === 0 ? 'normal' : 'house', fright: false, rev: false, release: RELEASE[i] * k, anim: Math.random() * 6
   }));
   S.fright = 0; S.freeze = 0; S.combo = 0; S.fruit = null;
@@ -161,7 +249,7 @@ function resetPositions() {
 
 function newLevel() {
   grid = base.map(r => r.slice());
-  grid[15][9] = ' ';
+  grid[M.start[1]][M.start[0]] = ' ';
   S.dotsLeft = 0;
   for (const r of grid) for (const c of r) if (c === '.' || c === 'o') S.dotsLeft++;
   S.dotsEaten = 0;
@@ -240,7 +328,7 @@ function eatAt(x, y) {
     addScore(pts); popups.push({ x: x + 0.5, y: y + 0.2, text: String(pts), t: 1, color: '#ffd166' });
     S.fruit = null; Snd.fruit();
   }
-  if (S.dotsEaten === 70 || S.dotsEaten === 170) S.fruit = { x: 9, y: 11, t: 10 };
+  if (S.dotsEaten === M.fruitAt[0] || S.dotsEaten === M.fruitAt[1]) S.fruit = { x: M.fruit[0], y: M.fruit[1], t: 10 };
   if (S.dotsLeft <= 0 && S.mode === 'play') { S.mode = 'clear'; S.t = 2; Snd.clear(); }
 }
 
@@ -254,23 +342,23 @@ function playerArrive(e) {
 
 /* ───────────── ghosts ───────────── */
 function ghostTarget(g) {
-  if (S.gmode === 'scatter') return GH[g.id].corner;
+  if (S.gmode === 'scatter') return M.corners[g.id];
   switch (g.id) {
     case 0: return [P.tx, P.ty];
     case 1: return [P.tx + DX[P.face] * 4, P.ty + DY[P.face] * 4];
     case 2: { const ax = P.tx + DX[P.face] * 2, ay = P.ty + DY[P.face] * 2; return [ax * 2 - G[0].tx, ay * 2 - G[0].ty]; }
-    default: return Math.hypot(g.tx - P.tx, g.ty - P.ty) > 6 ? [P.tx, P.ty] : GH[3].corner;
+    default: return Math.hypot(g.tx - P.tx, g.ty - P.ty) > M.shy ? [P.tx, P.ty] : M.corners[3];
   }
 }
 
 function ghostArrive(g) {
   if (g.state === 'eyes') {
-    if (g.tx === 9 && g.ty === 9) { g.state = 'house'; g.fright = false; g.release = 1.0; return -1; }
-    return bfsDir(g, 9, 9);
+    if (g.tx === M.house[0] && g.ty === M.house[1]) { g.state = 'house'; g.fright = false; g.release = 1.0; return -1; }
+    return bfsDir(g, M.house[0], M.house[1]);
   }
   if (g.state === 'exit') {
-    if (g.tx === 9 && g.ty === 7) { g.state = 'normal'; g.fright = S.fright > 0; }
-    else return bfsDir(g, 9, 7);
+    if (g.tx === M.exit[0] && g.ty === M.exit[1]) { g.state = 'normal'; g.fright = S.fright > 0; }
+    else return bfsDir(g, M.exit[0], M.exit[1]);
   }
   const dirs = [];
   for (let d = 0; d < 4; d++) if (walkable(g.tx + DX[d], g.ty + DY[d], false)) dirs.push(d);
@@ -278,7 +366,7 @@ function ghostArrive(g) {
   let opts = g.dir >= 0 ? dirs.filter(d => d !== OPP(g.dir)) : dirs;
   if (!opts.length) opts = dirs;
   if (!opts.length) return -1;
-  if (g.fright) return opts[(Math.random() * opts.length) | 0];
+  if (g.fright || Math.random() < 0.3) return opts[(Math.random() * opts.length) | 0];
   const [tx, ty] = ghostTarget(g);
   let best = opts[0], bd = 1e9;
   for (const d of opts) {
@@ -291,9 +379,9 @@ function ghostArrive(g) {
 function ghostSpeed(g) {
   if (g.state === 'eyes') return 12;
   if (g.state === 'house') return 0;
-  let s = g.state === 'exit' ? 3.6 : ghostBase();
+  let s = g.state === 'exit' ? 3.2 : ghostBase();
   if (g.fright) s = ghostBase() * 0.55;
-  if (g.ty === 9 && (g.tx < 4 || g.tx > 14)) s *= 0.55;
+  if (g.ty === M.tunnelRow && (g.tx < M.tl || g.tx > M.tr)) s *= 0.55;
   return s;
 }
 
@@ -311,7 +399,7 @@ function collide() {
     const [gx, gy] = pos(g);
     let dx = Math.abs(gx - px); dx = Math.min(dx, COLS - dx);
     const dy = Math.abs(gy - py);
-    if (dx * dx + dy * dy < 0.25) {
+    if (dx * dx + dy * dy < 0.17) {
       if (g.fright) {
         const pts = 200 * Math.pow(2, Math.min(S.combo, 3)); S.combo++;
         g.state = 'eyes'; g.fright = false; g.dir = -1; g.p = 0;
@@ -371,7 +459,7 @@ function update(dt) {
 
 function gameOver() {
   S.mode = 'over';
-  try { localStorage.setItem('mochimaze.best', String(S.best)); } catch (e) {}
+  saveBest();
   showOverlay('over');
 }
 
@@ -407,7 +495,7 @@ function buildMaze(line, fill) {
   }
   x.stroke();
   x.shadowBlur = 0; x.strokeStyle = '#ff9ec7'; x.lineWidth = 0.12;
-  x.beginPath(); x.moveTo(9.05, 8.5); x.lineTo(9.95, 8.5); x.stroke();
+  x.beginPath(); x.moveTo(M.door[0] + 0.05, M.door[1] + 0.5); x.lineTo(M.door[0] + 0.95, M.door[1] + 0.5); x.stroke();
   return c;
 }
 
@@ -571,9 +659,9 @@ function render(ts) {
     ctx.lineWidth = size * 0.18; ctx.strokeStyle = '#120a3a'; ctx.lineJoin = 'round';
     ctx.strokeText(txt, COLS / 2, y); ctx.fillStyle = color; ctx.fillText(txt, COLS / 2, y);
   };
-  if (S.mode === 'ready') banner(T('ready'), 11.5, 1.0, '#ffd166');
-  else if (S.mode === 'play' && !S.started) { ctx.globalAlpha = 0.6 + 0.4 * Math.sin(clock * 5); banner(T('go'), 13.5, 0.62, '#ffffff'); ctx.globalAlpha = 1; }
-  else if (S.mode === 'clear') banner(T('clear'), 11.5, 0.9, '#7be7ff');
+  if (S.mode === 'ready') banner(T('ready'), M.bannerY[0], 1.0, '#ffd166');
+  else if (S.mode === 'play' && !S.started) { ctx.globalAlpha = 0.6 + 0.4 * Math.sin(clock * 5); banner(T('go'), M.bannerY[1], 0.62, '#ffffff'); ctx.globalAlpha = 1; }
+  else if (S.mode === 'clear') banner(T('clear'), M.bannerY[0], 0.9, '#7be7ff');
 }
 
 /* ───────────── HUD & overlay ───────────── */
@@ -594,8 +682,13 @@ function applyLang() {
 function showOverlay(kind) {
   const ov = $('overlay');
   ov.classList.remove('hidden');
+  $('verPick').classList.toggle('hidden', kind === 'paused');
+  $('heroes').classList.toggle('hidden', kind === 'paused');
+  const roast = $('roast');
+  roast.classList.toggle('hidden', kind === 'paused');
+  if (kind !== 'paused') roast.textContent = '“' + roastLine(kind === 'over' ? 'over' : 'start') + '”';
   $('title').dataset.i18n = kind === 'paused' ? 'paused' : kind === 'over' ? 'over' : '';
-  $('title').textContent = kind === 'paused' ? T('paused') : kind === 'over' ? T('over') : 'Mochi Maze';
+  $('title').textContent = kind === 'paused' ? T('paused') : kind === 'over' ? T('over') : 'Misu Maze';
   const res = $('result');
   if (kind === 'over') {
     res.classList.remove('hidden');
@@ -699,18 +792,33 @@ window.addEventListener('resize', resize);
 window.addEventListener('orientationchange', () => setTimeout(resize, 150));
 if (window.ResizeObserver) new ResizeObserver(resize).observe(stage);
 
-grid = base.map(r => r.slice()); grid[15][9] = ' ';
-S.sched = modeSchedule(1);
-resetPositions();
+function setVersion(id, persist) {
+  loadMaze(id);
+  if (persist) { try { localStorage.setItem('mochimaze.ver', M.id); } catch (e) {} }
+  loadBest();
+  S.mode = 'title'; S.paused = false; S.score = 0; S.level = 1; S.lives = 3; S.newBest = false;
+  grid = base.map(r => r.slice()); grid[M.start[1]][M.start[0]] = ' ';
+  S.dotsLeft = M.total; S.dotsEaten = 0; S.fruit = null;
+  S.sched = modeSchedule(1);
+  resetPositions();
+  document.querySelectorAll('#verPick button').forEach(b => b.classList.toggle('on', b.dataset.ver === M.id));
+  updateHud();
+  resize();
+}
+document.querySelectorAll('#verPick button').forEach(b => {
+  b.addEventListener('click', () => { Snd.resume(); setVersion(b.dataset.ver, true); showOverlay('title'); });
+});
+
+let savedVer = 'venti';
+try { savedVer = localStorage.getItem('mochimaze.ver') || 'venti'; } catch (e) {}
+setVersion(MAZES[savedVer] ? savedVer : 'venti', false);
 applyLang();
-updateHud();
 showOverlay('title');
-resize();
 requestAnimationFrame(frame);
 
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
 }
 
-window.__mm = { S, startGame, update, setWant, newLevel, walkable, bfsDir, pos, get P() { return P; }, get G() { return G; }, get grid() { return grid; }, base, COLS, ROWS, DX, DY };
+window.__mm = { S, startGame, update, setWant, newLevel, walkable, bfsDir, pos, setVersion, get P() { return P; }, get G() { return G; }, get grid() { return grid; }, get base() { return base; }, get COLS() { return COLS; }, get ROWS() { return ROWS; }, get M() { return M; }, DX, DY };
 })();

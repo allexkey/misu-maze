@@ -1,9 +1,9 @@
-# 🍡 Mochi Maze
+# 🍡 Misu Maze
 
 A free, original maze-chase game that runs in the browser and installs on your phone as a PWA (works offline).
-Munch every pearl, grab the big amber ones to scare the Grumps, and dodge them otherwise.
+Two versions: **Venti** (full maze) and **Combo** (compact, ~40% size, bigger on phones). Munch every pearl, grab the big amber ones to scare the Grumps, and dodge them otherwise.
 
-**▶ Play:** https://allexkey.github.io/mochi-maze/
+**▶ Play:** https://allexkey.github.io/misu-maze/
 
 ## Install on your phone
 - **Android (Chrome):** open the link → menu ⋮ → *Install app* (or tap the in-game *Install app* button).
