@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Mochi Maze</title>
+<meta name="description" content="Mochi Maze — a free, offline-ready maze-chase game. Munch the pearls, dodge the Grumps. Installable PWA.">
+<meta name="theme-color" content="#0b0620">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mochi Maze">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#0b0620;color:#fff;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden;overscroll-behavior:none;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+body{background:radial-gradient(120% 80% at 50% 0%,#2a1466 0%,#0b0620 60%)}
+#app{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+header{width:100%;max-width:640px;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px 4px}
+.stat{display:flex;flex-direction:column;align-items:flex-start;min-width:0}
+.stat small{font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.6}
+.stat b{font-size:20px;font-variant-numeric:tabular-nums;line-height:1.1}
+#lives{color:#ff7aa8;letter-spacing:2px;font-size:18px;min-width:40px;text-align:center}
+.btns{display:flex;gap:6px}
+.btns button{width:38px;height:38px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:#fff;font-size:16px;touch-action:manipulation}
+#stage{flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center;position:relative}
+canvas{display:block;border-radius:14px;box-shadow:0 0 40px rgba(91,124,255,.25)}
+#pad{display:none;grid-template-columns:repeat(3,64px);grid-template-rows:repeat(3,64px);gap:6px;padding:8px 0 14px}
+#pad button{border-radius:18px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.1);color:#fff;font-size:24px;touch-action:none}
+#pad button:active{background:rgba(255,255,255,.28)}
+#pad .u{grid-area:1/2}#pad .l{grid-area:2/1}#pad .r{grid-area:2/3}#pad .d{grid-area:3/2}
+@media (pointer:coarse){#pad{display:grid}}
+@media (pointer:coarse) and (orientation:landscape){
+  #pad{position:absolute;right:calc(14px + env(safe-area-inset-right));bottom:10px;opacity:.55;padding:0;grid-template-columns:repeat(3,56px);grid-template-rows:repeat(3,56px)}
+}
+#overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(8,4,24,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:5;padding:20px}
+#overlay.hidden,.hidden{display:none!important}
+.card{max-width:340px;width:100%;text-align:center;padding:26px 22px;border-radius:26px;background:linear-gradient(160deg,rgba(91,124,255,.28),rgba(255,122,168,.18));border:1px solid rgba(255,255,255,.18);box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.card h1{margin:0 0 6px;font-size:34px;letter-spacing:.01em;background:linear-gradient(90deg,#ffd9e6,#ffb347);-webkit-background-clip:text;background-clip:text;color:transparent}
+.card p{margin:8px 0;opacity:.85;line-height:1.4;font-size:15px}
+.card .res{font-weight:700;opacity:1;color:#ffd166}
+.card button.main{margin-top:14px;width:100%;padding:15px;border-radius:16px;border:0;font-size:19px;font-weight:800;color:#2b1b3a;background:linear-gradient(90deg,#ffd9e6,#ffb347);box-shadow:0 8px 24px rgba(255,179,71,.35);touch-action:manipulation}
+.card button.alt{margin-top:10px;width:100%;padding:12px;border-radius:14px;border:1px solid rgba(255,255,255,.3);background:transparent;color:#fff;font-size:15px;touch-action:manipulation}
+#langBtn{position:absolute;top:10px;right:10px;width:auto;padding:4px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.3);background:transparent;color:#fff;font-size:12px}
+.card{position:relative}
+.mascot{font-size:54px;line-height:1;margin-bottom:4px}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="stat"><small data-i18n="score">Score</small><b id="score">0</b></div>
+    <div class="stat"><small data-i18n="best">Best</small><b id="best">0</b></div>
+    <div class="stat"><small data-i18n="level">Level</small><b id="level">1</b></div>
+    <div id="lives" aria-label="lives"></div>
+    <div class="btns"><button id="muteBtn" aria-label="Sound">🔊</button><button id="pauseBtn" aria-label="Pause">⏸</button></div>
+  </header>
+  <div id="stage"><canvas id="cv" aria-label="Mochi Maze game"></canvas></div>
+  <div id="pad" aria-label="controls">
+    <button class="u" data-dir="0" aria-label="Up">▲</button>
+    <button class="l" data-dir="1" aria-label="Left">◀</button>
+    <button class="r" data-dir="3" aria-label="Right">▶</button>
+    <button class="d" data-dir="2" aria-label="Down">▼</button>
+  </div>
+</div>
+<div id="overlay">
+  <div class="card">
+    <button id="langBtn" type="button">RO</button>
+    <div class="mascot">🍡</div>
+    <h1 id="title">Mochi Maze</h1>
+    <p id="result" class="res hidden"></p>
+    <p id="tag" data-i18n="tag"></p>
+    <p id="how" data-i18n="how"></p>
+    <button id="playBtn" class="main" type="button" data-i18n="play">Play</button>
+    <button id="installBtn" class="alt hidden" type="button" data-i18n="install">Install app</button>
+    <p id="iosHint" class="hidden" data-i18n="ios"></p>
+  </div>
+</div>
+<noscript><p style="padding:20px">Mochi Maze needs JavaScript.</p></noscript>
+<script src="game.js"></script>
+</body>
+</html>
